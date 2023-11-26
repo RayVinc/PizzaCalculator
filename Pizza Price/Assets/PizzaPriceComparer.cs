@@ -1,62 +1,111 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PizzaPriceComparer : MonoBehaviour
 {
-    // UI elements for the first column
-    public Dropdown shapeDropdown1;
-    public InputField priceInput1;
-    public InputField diameterInput1;
-    public Text pricePerCmText1;
+    // Round pizza input fields
+    public InputField priceInput1, diameterInput1;
+    public InputField priceInput2, diameterInput2;
+    public Text pricePerCMText1, pricePerCMText2;
+    public GameObject Panel1, Panel2, Panel3;
 
-    // UI elements for the second column
-    public Dropdown shapeDropdown2;
-    public InputField priceInput2;
-    public InputField diameterInput2;
-    public Text pricePerCmText2;
+    public Color highlightColor = new Color(0, 255, 0, 0.5f);
+    private Color defaultColor = new Color(0, 0, 0, 0.5f);
 
-    // UI elements for the third column
-    public Dropdown shapeDropdown3;
-    public InputField priceInput3;
-    public InputField diameterInput3;
-    public Text pricePerCmText3;
-    
-    
-    
+    // Square pizza input fields
+    public InputField priceInput3, widthInput, lengthInput;
+    public Text pricePerCMText3;
 
+    // Button
+    public Button calculateButton;
 
-    public void CalculatePrices()
+    void Start()
     {
-        // Perform the calculations
-        CalculatePriceForInput(priceInput1, diameterInput1, pricePerCmText1, shapeDropdown1);
-        CalculatePriceForInput(priceInput2, diameterInput2, pricePerCmText2, shapeDropdown2);
-        CalculatePriceForInput(priceInput3, diameterInput3, pricePerCmText3, shapeDropdown3);
+        // Add a listener to your button
+        calculateButton.onClick.AddListener(CalculatePrices);
+    } 
+
+    void HighlightBestPricePanel(float pricePerArea1, float pricePerArea2, float pricePerArea3)
+    {
+        // Find the best price
+        float bestPrice = Mathf.Min(pricePerArea1, pricePerArea2, pricePerArea3);
+
+        // Highlight the corresponding panel
+        if (bestPrice == pricePerArea1)
+            HighlightPanel(Panel1);
+        else if (bestPrice == pricePerArea2)
+            HighlightPanel(Panel2);
+        else if (bestPrice == pricePerArea3)
+            HighlightPanel(Panel3);
     }
 
-    private void CalculatePriceForInput(InputField priceInput, InputField sizeInput, Text resultText, Dropdown shapeDropdown)
+    void CalculatePrices()
     {
-        if(float.TryParse(priceInput.text, out float price) && float.TryParse(sizeInput.text, out float size))
-        {
-            float area;
-            if (shapeDropdown.value == 1) // Assuming '0' is the index for Round
-            {
-                // Calculate area for round pizza
-                area = Mathf.PI * Mathf.Pow(size / 2, 2);
-            }
-            else // Assuming '1' is the index for Square
-            {
-                // Calculate area for square pizza
-                area = size * size;
-            }
+        // Reset panel highlights
+        ResetPanelHighlights();
 
-            float pricePerCm = price / area;
-            resultText.text = $"{pricePerCm:0.##} per cm²";
-        }
-        else
-        {
-            resultText.text = "Invalid input";
-        }
+        // Initialize prices with a high value
+        float pricePerArea1 = float.MaxValue;
+        float pricePerArea2 = float.MaxValue;
+        float pricePerArea3 = float.MaxValue;
+
+        // Calculate for round pizzas
+        if (!string.IsNullOrEmpty(priceInput1.text) && !string.IsNullOrEmpty(diameterInput1.text))
+            pricePerArea1 = CalculateRoundPizza(priceInput1, diameterInput1, pricePerCMText1);
+
+        if (!string.IsNullOrEmpty(priceInput2.text) && !string.IsNullOrEmpty(diameterInput2.text))
+            pricePerArea2 = CalculateRoundPizza(priceInput2, diameterInput2, pricePerCMText2);
+
+        // Calculate for square pizza
+        if (!string.IsNullOrEmpty(priceInput3.text) && !string.IsNullOrEmpty(widthInput.text) && !string.IsNullOrEmpty(lengthInput.text))
+            pricePerArea3 = CalculateSquarePizza(priceInput3, widthInput, lengthInput, pricePerCMText3);
+
+        // Determine and highlight the best price panel
+        HighlightBestPricePanel(pricePerArea1, pricePerArea2, pricePerArea3);
+    }
+
+    void HighlightPanel(GameObject panel)
+    {
+        Image panelImage = panel.GetComponent<Image>();
+        if (panelImage != null)
+            panelImage.color = highlightColor;
+    }
+
+    void ResetPanelHighlights()
+    {
+        ResetPanelColor(Panel1);
+        ResetPanelColor(Panel2);
+        ResetPanelColor(Panel3);
+    }
+
+    void ResetPanelColor(GameObject panel)
+    {
+        Image panelImage = panel.GetComponent<Image>();
+        if (panelImage != null)
+            panelImage.color = defaultColor;
+    }
+
+    float CalculateRoundPizza(InputField priceInput, InputField diameterInput, Text resultText)
+    {
+        float price = float.Parse(priceInput.text);
+        float diameter = float.Parse(diameterInput.text);
+        float radius = diameter / 2;
+        float area = Mathf.PI * radius * radius;
+        float pricePerCM = price / area;
+
+        resultText.text = pricePerCM.ToString("F4");
+        return pricePerCM;
+    }
+
+    float CalculateSquarePizza(InputField priceInput, InputField widthInput, InputField lengthInput, Text resultText)
+    {
+        float price = float.Parse(priceInput.text);
+        float width = float.Parse(widthInput.text);
+        float length = float.Parse(lengthInput.text);
+        float area = width * length;
+        float pricePerCM = price / area;
+
+        resultText.text = pricePerCM.ToString("F4");
+        return pricePerCM;
     }
 }
